@@ -1,9 +1,10 @@
-package main
+package database
 
 import (
 	"context"
 	"env"
 	"fmt"
+	"os"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -36,9 +37,13 @@ func (db DB) Connect() error {
 		}
 	}()
 
-	if err = client.Database(string(db.env)).RunCommand(context.TODO(), bson.D{{"ping", 1}}).Err(); err != nil {
+	if err = client.Database(string(db.env)).RunCommand(context.TODO(), bson.D{{Key: "ping", Value: 1}}).Err(); err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func FromEnv() DB {
+	return DB{os.Getenv("MONGODB_USERNAME"), os.Getenv("MONGODB_PASSWORD"), nil, env.FromString(os.Getenv("ENV"))}
 }
