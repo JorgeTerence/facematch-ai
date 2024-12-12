@@ -2,8 +2,8 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"env"
+	"fmt"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -36,7 +36,7 @@ func (db DB) Connect() error {
 		}
 	}()
 
-	if err = client.Database(db.env).RunCommand(context.TODO(), bson.D{{"ping", 1}}).Err(); err != nil {
+	if err = client.Database(string(db.env)).RunCommand(context.TODO(), bson.D{{"ping", 1}}).Err(); err != nil {
 		return err
 	}
 
