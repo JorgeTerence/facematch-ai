@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"env"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -15,10 +16,11 @@ type DB struct {
 	username string
 	password string
 	client   *mongo.Client
+	env      env.Environment
 }
 
-func (this DB) Connect() error {
-	connectionString := fmt.Sprintf(MONGODB_PATTERN, this.username, this.password)
+func (db DB) Connect() error {
+	connectionString := fmt.Sprintf(MONGODB_PATTERN, db.username, db.password)
 
 	serverAPI := options.ServerAPI(options.ServerAPIVersion1)
 	opts := options.Client().ApplyURI(connectionString).SetServerAPIOptions(serverAPI)
@@ -34,7 +36,7 @@ func (this DB) Connect() error {
 		}
 	}()
 
-	if err = client.Database("development").RunCommand(context.TODO(), bson.D{{"ping", 1}}).Err(); err != nil {
+	if err = client.Database(db.env).RunCommand(context.TODO(), bson.D{{"ping", 1}}).Err(); err != nil {
 		return err
 	}
 
