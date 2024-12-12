@@ -5,6 +5,7 @@ import (
 	"env"
 	"fmt"
 	"os"
+	"platform"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -19,12 +20,6 @@ type DB struct {
 	password string
 	client   *mongo.Client
 	env      env.Environment
-}
-
-type Account struct {
-	Username   string
-	Id         interface{}
-	PlatformId int
 }
 
 func (db DB) Connect() error {
@@ -55,7 +50,7 @@ func FromEnv() DB {
 	return DB{os.Getenv("MONGODB_USERNAME"), os.Getenv("MONGODB_PASSWORD"), nil, env.FromString(os.Getenv("ENV"))}
 }
 
-func (db DB) InsertAccount(account *Account) error {
+func (db DB) InsertAccount(account *platform.Account) error {
 	database := db.client.Database(string(db.env))
 	collection := database.Collection("accounts")
 	res, err := collection.InsertOne(context.Background(), bson.D{{"username", account.Username}, {"platform_id", account.PlatformId}})

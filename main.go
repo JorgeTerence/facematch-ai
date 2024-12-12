@@ -1,9 +1,9 @@
 package main
 
 import (
-	"log"
 	"database"
-	// TODO: "platform" package for connecting to the LinkedIn API
+	"log"
+	"os"
 
 	"github.com/joho/godotenv"
 )
@@ -27,6 +27,6 @@ func main() {
 	}
 	log.Println("MongoDB Connection Successful")
 
-	app := App{8000, db}
+	app := App{8000, db, os.Getenv("PLATFORM_APP_ID"), os.Getenv("PLATFORM_APP_SECRET"), os.Getenv("AUTH_URL")}
 	app.Start()
 }
