@@ -13,6 +13,8 @@ import (
 // Both API Gateway and Amplify have free tiers. Mayyyyybe EC2 images are not ideal
 // Perhaps I'll configure GitHub actions to handle CI/CD and deploy to AWS
 
+// What it does: login with linkedin, update account and see results
+
 func main() {
 	err := godotenv.Load()
 	if err != nil {
@@ -25,6 +27,6 @@ func main() {
 	}
 	log.Println("MongoDB Connection Successful")
 
-	app := App{8000}
+	app := App{8000, db}
 	app.Start()
 }
