@@ -56,8 +56,8 @@ func FromEnv() DB {
 }
 
 func (db DB) insertAccount(account *Account) error {
-	database := db.client.Database("FaceMatchAI")
-collection := database.Collection("accounts")
+	database := db.client.Database(string(db.env))
+	collection := database.Collection("accounts")
 	res, err := collection.InsertOne(context.Background(), bson.D{{"username", account.Username}, {"platform_id", account.PlatformId}})
 	if err != nil {
 		return err
