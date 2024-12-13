@@ -22,7 +22,7 @@ func (app App) Start() {
 	auth := r.Group("/auth")
 	{
 		auth.POST("/login", app.login)
-		auth.POST("/connect", app.TODO("Respond to LinkedIn oauth redirect"))
+		auth.POST("/connect", app.oauth)
 		auth.POST("/logout", app.TODO("Log out from LinkedIn connection"))
 		auth.POST("/update", app.TODO("Update your profile information (name, picture and connections)"))
 		auth.POST("/update-all", app.TODO("Update your network's profiles' information"))
@@ -57,7 +57,7 @@ func (app App) login(c *gin.Context) {
 }
 
 // Register user and all 1st degree connections
-func (app App) authPlatform(c *gin.Context) {
+func (app App) oauth(c *gin.Context) {
 	loginToken, ok := c.Params.Get("code")
 	if !ok {
 		c.String(409, "Failed LinkedIn authorization. Missing auth code.")
