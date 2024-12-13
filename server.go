@@ -1,8 +1,12 @@
 package main
 
 import (
+	"bytes"
 	"database"
+	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
 	"net/url"
 	"platform"
 
@@ -46,7 +50,7 @@ func (app App) ping(c *gin.Context) {
 // Fill-in handler for development purposes
 func (app App) TODO(description string) func(*gin.Context) {
 	return func(c *gin.Context) {
-		c.String(200, fmt.Sprintf("This route is under development: %s\nDescription: %s", c.Request.URL, description))
+		c.String(501, "This route is under development: %s\nDescription: %s", c.Request.URL, description)
 	}
 }
 
@@ -58,19 +62,61 @@ func (app App) login(c *gin.Context) {
 
 // Register user and all 1st degree connections
 func (app App) authPlatform(c *gin.Context) {
-	userToken, ok := c.Params.Get("code")
+	loginToken, ok := c.Params.Get("code")
 	if !ok {
-		c.String(500, "Failed LinkedIn authorization. Missing auth code.")
+		c.String(409, "Failed LinkedIn authorization. Missing auth code.")
 	}
 
-	state, ok := c.Params.Get("state")
+	_, ok = c.Params.Get("state")
 	if !ok {
 		c.String(500, "Failed LinkedIn authorization. Missing state check.")
 	}
 
 	// TODO: check the state in some sort of cache to see if it's in been called by our application.
 
-	
+	oAuthBody := map[string]string{
+		"grant_type":    "authorization_code",
+		"code":          loginToken,
+		"redirect_uri":  url.QueryEscape(app.authURL),
+		"client_id":     app.id,
+		"client_secret": app.secret,
+	}
+
+	payload, err := json.Marshal(oAuthBody)
+	if err != nil {
+		c.String(500, "Failed to compose OAuth payload.")
+	}
+
+	res, err := http.Post(platform.OAUTH_URL, "application/json", bytes.NewBuffer(payload))
+	if err != nil {
+		c.String(500, "OAuth failed.")
+	}
+
+	defer res.Body.Close()
+
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		c.String(500, "Failed to read response body.")
+	}
+
+	var response struct {
+		AccessToken string `json:"access_token"`
+		ExpiresIn   int    `json:"expires_in"`
+	}
+
+	if err := json.Unmarshal(body, &response); err != nil {
+		c.String(500, "Failed to parse response body.")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, platform.PROFILE_SELF_URL, http.NoBody)
+	if err != nil {
+		c.String(500, "Failed to initialize request to profile endpoint: %s",  err.Error())
+	}
+
+	req.Header.Set("Authorization", "Bearer: " + response.AccessToken)
+
+
+
 
 	// read code param
 	// check if user is in platform

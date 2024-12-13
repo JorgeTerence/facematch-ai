@@ -58,7 +58,7 @@ func (db DB) InsertAccount(account *platform.Account) error {
 		return err
 	}
 
-	account.Id = res.InsertedID
+	account.InternalId = res.InsertedID
 	return nil
 }
 

@@ -1,9 +1,9 @@
 package platform
 
 type Account struct {
-	Id          interface{}
+	InternalId  interface{}
 	PlatformId  string
-	Username    string
+	FirstName   string
 	Connections []string
 }
 
@@ -18,11 +18,15 @@ type TrueAccount struct {
 	ProfilePictureUrl string
 }
 
-const LOGIN_URL_PATTERN = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&state=%d&scope=w_member_social&client_id=%s&redirect_uri=%s`
+const (
+	LOGIN_URL_PATTERN = "https://www.linkedin.com/oauth/v2/authorization?response_type=code&state=%d&scope=w_member_social&client_id=%s&redirect_uri=%s"
+	OAUTH_URL         = "https://www.linkedin.com/oauth/v2/accessToken"
+	PROFILE_SELF_URL  = "https://www.linkedin.com/oauth/v2/me"
+)
 
 var (
 	accountRepository = []Account{
-		Account{Username: "Antonio", Id: ""},
+		Account{Username: "Antonio", InternalId: ""},
 	}
 )
 
