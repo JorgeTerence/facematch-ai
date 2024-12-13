@@ -1,12 +1,8 @@
 package main
 
 import (
-	"bytes"
 	"database"
-	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
 	"net/url"
 	"platform"
 
@@ -28,7 +24,7 @@ func (app App) Start() {
 		auth.POST("/login", app.login)
 		auth.POST("/connect", app.TODO("Respond to LinkedIn oauth redirect"))
 		auth.POST("/logout", app.TODO("Log out from LinkedIn connection"))
-		auth.POST("/update", app.TODO("Update your profile information"))
+		auth.POST("/update", app.TODO("Update your profile information (name, picture and connections)"))
 		auth.POST("/update-all", app.TODO("Update your network's profiles' information"))
 	}
 
@@ -67,61 +63,24 @@ func (app App) authPlatform(c *gin.Context) {
 		c.String(409, "Failed LinkedIn authorization. Missing auth code.")
 	}
 
+	// TODO: check the state in some sort of cache to see if it's in been called by our application.
 	_, ok = c.Params.Get("state")
 	if !ok {
 		c.String(500, "Failed LinkedIn authorization. Missing state check.")
 	}
 
-	// TODO: check the state in some sort of cache to see if it's in been called by our application.
-
-	oAuthBody := map[string]string{
-		"grant_type":    "authorization_code",
-		"code":          loginToken,
-		"redirect_uri":  url.QueryEscape(app.authURL),
-		"client_id":     app.id,
-		"client_secret": app.secret,
-	}
-
-	payload, err := json.Marshal(oAuthBody)
+	authToken, _, err := platform.OAuth(loginToken, app.authURL, app.id, app.secret)
 	if err != nil {
-		c.String(500, "Failed to compose OAuth payload.")
+		c.String(500, "Failed OAuth chain: %s", err.Error())
 	}
 
-	res, err := http.Post(platform.OAUTH_URL, "application/json", bytes.NewBuffer(payload))
+	account, err := platform.GetProfile(authToken)
 	if err != nil {
-		c.String(500, "OAuth failed.")
+		c.String(500, "Failed loading profile data: %s", err.Error())
 	}
 
-	defer res.Body.Close()
+	// TODO: If user is not registered in the platform, register it + their connections.
+	// TODO: create index for PlatformId
 
-	body, err := io.ReadAll(res.Body)
-	if err != nil {
-		c.String(500, "Failed to read response body.")
-	}
-
-	var response struct {
-		AccessToken string `json:"access_token"`
-		ExpiresIn   int    `json:"expires_in"`
-	}
-
-	if err := json.Unmarshal(body, &response); err != nil {
-		c.String(500, "Failed to parse response body.")
-	}
-
-	req, err := http.NewRequest(http.MethodGet, platform.PROFILE_SELF_URL, http.NoBody)
-	if err != nil {
-		c.String(500, "Failed to initialize request to profile endpoint: %s",  err.Error())
-	}
-
-	req.Header.Set("Authorization", "Bearer: " + response.AccessToken)
-
-
-
-
-	// read code param
-	// check if user is in platform
-	// if it is, send some sort of credential
-	// else process their data and their connections' and send credential
-
-	// app.db.InsertAccount(&platform.Account{Username: "", PlatformId: ""})
+	c.JSON(200, account)
 }
